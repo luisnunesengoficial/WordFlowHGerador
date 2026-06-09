@@ -1,0 +1,866 @@
+<!DOCTYPE html><html lang="pt-BR"><head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>WordFlow — Editor de Texto</title>
+
+  <!-- Social Meta -->
+  <meta property="og:title" content="WordFlow — Editor de Texto Web"/>
+  <meta property="og:description" content="Editor de texto moderno inspirado no Microsoft Word. Negrito, itálico, fontes, cores, listas e muito mais — direto no navegador."/>
+  <meta property="og:url" content="https://www.onspace.ai"/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="OnSpace.AI"/>
+  <meta property="og:image" content="https://cdn-ai.onspace.ai/onspace/project/screenshot/online/pre-site/9bgvja.jpg"/>
+  <meta property="og:image:width" content="1200"/>
+  <meta property="og:image:height" content="630"/>
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="WordFlow — Editor de Texto Web"/>
+  <meta name="twitter:description" content="Editor de texto moderno inspirado no Microsoft Word. Direto no navegador."/>
+  <meta name="twitter:image" content="https://cdn-ai.onspace.ai/onspace/project/screenshot/online/pre-site/9bgvja.jpg"/>
+  <meta name="twitter:url" content="https://www.onspace.ai"/>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            inter: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50:  '#eff6ff',
+              100: '#dbeafe',
+              200: '#bfdbfe',
+              400: '#60a5fa',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* ── Global ── */
+    *, *::before, *::after { box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; }
+
+    /* ── Toolbar scrollbar hide ── */
+    #toolbar::-webkit-scrollbar { display: none; }
+    #toolbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* ── Divider ── */
+    .tb-divider {
+      width: 1px;
+      height: 28px;
+      background: #d1d5db;
+      flex-shrink: 0;
+      align-self: center;
+    }
+
+    /* ── Toolbar button base ── */
+    .tb-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+      color: #374151;
+      background: transparent;
+      flex-shrink: 0;
+      font-size: 14px;
+    }
+    .tb-btn:hover { background: #e5e7eb; border-color: #d1d5db; }
+    .tb-btn.active { background: #dbeafe; border-color: #93c5fd; color: #1d4ed8; }
+
+    /* ── Select / input ── */
+    .tb-select, .tb-input {
+      height: 34px;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      background: #fff;
+      padding: 0 8px;
+      font-size: 13px;
+      color: #374151;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      flex-shrink: 0;
+    }
+    .tb-select:focus, .tb-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px #bfdbfe; }
+
+    /* ── Color input ── */
+    .tb-color {
+      width: 34px;
+      height: 34px;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      padding: 2px;
+      cursor: pointer;
+      background: #fff;
+      flex-shrink: 0;
+    }
+    .tb-color::-webkit-color-swatch-wrapper { padding: 0; border-radius: 4px; }
+    .tb-color::-webkit-color-swatch { border: none; border-radius: 4px; }
+
+    /* ── A4 Document ── */
+    #doc-area {
+      width: 210mm;
+      min-height: 297mm;
+      background: #ffffff;
+      padding: 25mm 20mm;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1),
+                  0 10px 30px rgba(0,0,0,0.08);
+      border-radius: 2px;
+      outline: none;
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 12pt;
+      line-height: 1.6;
+      color: #111827;
+      word-break: break-word;
+      caret-color: #2563eb;
+    }
+    #doc-area:focus { box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1),
+                  0 10px 30px rgba(0,0,0,0.08), 0 0 0 2px #bfdbfe; }
+    #doc-area[data-placeholder]:empty::before {
+      content: attr(data-placeholder);
+      color: #9ca3af;
+      pointer-events: none;
+    }
+
+    /* ── Responsive A4 ── */
+    @media (max-width: 900px) {
+      #doc-area {
+        width: 100%;
+        padding: 16mm 12mm;
+        min-height: 240mm;
+      }
+    }
+    @media (max-width: 480px) {
+      #doc-area { padding: 10mm 8mm; min-height: 180mm; }
+    }
+
+    /* ── Status bar ── */
+    #statusbar { font-size: 12px; }
+
+    /* ── Toast notification ── */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      opacity: 0;
+      transition: opacity 0.25s, transform 0.25s;
+      pointer-events: none;
+      z-index: 9999;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── Modal overlay ── */
+    #modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.4);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    #modal-overlay.open { opacity: 1; pointer-events: all; }
+    #modal-box { transform: scale(0.96); transition: transform 0.2s; }
+    #modal-overlay.open #modal-box { transform: scale(1); }
+
+    /* ── List styles inside doc ── */
+    #doc-area ul { list-style: disc; padding-left: 1.5em; }
+    #doc-area ol { list-style: decimal; padding-left: 1.5em; }
+
+    /* ── Print ── */
+    @media print {
+      #appbar, #toolbar-wrapper, #statusbar, #toast, #modal-overlay { display: none !important; }
+      #canvas { background: none !important; padding: 0 !important; }
+      #doc-area { box-shadow: none !important; width: 210mm !important; min-height: 297mm !important; }
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col font-inter">
+
+  <!-- ═══════════════════════════════════════
+       APP BAR
+  ═══════════════════════════════════════ -->
+  <header id="appbar" class="bg-brand-700 text-white flex items-center px-4 py-2 gap-3 select-none z-50 flex-shrink-0">
+    <!-- Logo -->
+    <div class="flex items-center gap-2">
+      <div class="w-8 h-8 bg-white rounded flex items-center justify-center">
+        <i class="fa-solid fa-file-word text-brand-700 text-lg"></i>
+      </div>
+      <span class="font-semibold text-base tracking-tight hidden sm:block">WordFlow</span>
+    </div>
+
+    <!-- File actions -->
+    <div class="flex items-center gap-1 ml-1">
+      <button id="btn-new" title="Novo Documento (Ctrl+N)" class="flex items-center gap-1.5 text-white/90 hover:text-white hover:bg-white/15 px-2.5 py-1.5 rounded text-sm font-medium transition">
+        <i class="fa-solid fa-file-circle-plus text-xs"></i>
+        <span class="hidden sm:inline">Novo</span>
+      </button>
+      <button id="btn-open" title="Abrir Arquivo .txt (Ctrl+O)" class="flex items-center gap-1.5 text-white/90 hover:text-white hover:bg-white/15 px-2.5 py-1.5 rounded text-sm font-medium transition">
+        <i class="fa-solid fa-folder-open text-xs"></i>
+        <span class="hidden sm:inline">Abrir</span>
+      </button>
+      <button id="btn-save" title="Salvar como .txt (Ctrl+S)" class="flex items-center gap-1.5 text-white/90 hover:text-white hover:bg-white/15 px-2.5 py-1.5 rounded text-sm font-medium transition">
+        <i class="fa-solid fa-floppy-disk text-xs"></i>
+        <span class="hidden sm:inline">Salvar</span>
+      </button>
+      <button id="btn-print" title="Imprimir (Ctrl+P)" class="flex items-center gap-1.5 text-white/90 hover:text-white hover:bg-white/15 px-2.5 py-1.5 rounded text-sm font-medium transition">
+        <i class="fa-solid fa-print text-xs"></i>
+        <span class="hidden sm:inline">Imprimir</span>
+      </button>
+    </div>
+
+    <!-- Document title -->
+    <div class="flex-1 flex justify-center">
+      <input id="doc-title" type="text" value="Documento sem título" class="bg-transparent text-white text-sm font-medium text-center border-b border-transparent hover:border-white/40 focus:border-white outline-none transition w-48 sm:w-64 px-1 pb-0.5" title="Clique para renomear"/>
+    </div>
+
+    <!-- Word count -->
+    <div class="hidden sm:flex items-center gap-1 text-white/70 text-xs">
+      <i class="fa-solid fa-align-left text-xs"></i>
+      <span id="word-count-header">0 palavras</span>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════
+       TOOLBAR
+  ═══════════════════════════════════════ -->
+  <div id="toolbar-wrapper" class="bg-white border-b border-gray-200 flex-shrink-0 z-40 sticky top-0">
+    <div id="toolbar" class="flex items-center gap-1 px-3 py-2 overflow-x-auto">
+
+      <!-- Font Family -->
+      <select id="font-family" class="tb-select w-36" title="Tipo de Fonte">
+        <option value="&#39;Times New Roman&#39;, Times, serif">Times New Roman</option>
+        <option value="Arial, Helvetica, sans-serif">Arial</option>
+        <option value="&#39;Calibri&#39;, Candara, sans-serif">Calibri</option>
+        <option value="Georgia, &#39;Times New Roman&#39;, serif">Georgia</option>
+        <option value="&#39;Courier New&#39;, Courier, monospace">Courier New</option>
+        <option value="Verdana, Geneva, sans-serif">Verdana</option>
+        <option value="Trebuchet MS, sans-serif">Trebuchet MS</option>
+        <option value="&#39;Comic Sans MS&#39;, cursive">Comic Sans MS</option>
+        <option value="Impact, Haettenschweiler, sans-serif">Impact</option>
+        <option value="&#39;Palatino Linotype&#39;, Palatino, serif">Palatino</option>
+      </select>
+
+      <!-- Font Size -->
+      <select id="font-size" class="tb-select w-16" title="Tamanho da Fonte">
+        <option value="8pt">8</option>
+        <option value="9pt">9</option>
+        <option value="10pt">10</option>
+        <option value="11pt">11</option>
+        <option value="12pt" selected="">12</option>
+        <option value="14pt">14</option>
+        <option value="16pt">16</option>
+        <option value="18pt">18</option>
+        <option value="20pt">20</option>
+        <option value="22pt">22</option>
+        <option value="24pt">24</option>
+        <option value="26pt">26</option>
+        <option value="28pt">28</option>
+        <option value="36pt">36</option>
+        <option value="48pt">48</option>
+        <option value="72pt">72</option>
+      </select>
+
+      <div class="tb-divider"></div>
+
+      <!-- Text Style -->
+      <button id="btn-bold" class="tb-btn" title="Negrito (Ctrl+B)"><i class="fa-solid fa-bold"></i></button>
+      <button id="btn-italic" class="tb-btn" title="Itálico (Ctrl+I)"><i class="fa-solid fa-italic"></i></button>
+      <button id="btn-underline" class="tb-btn" title="Sublinhado (Ctrl+U)"><i class="fa-solid fa-underline"></i></button>
+      <button id="btn-strikethrough" class="tb-btn" title="Tachado"><i class="fa-solid fa-strikethrough"></i></button>
+
+      <div class="tb-divider"></div>
+
+      <!-- Colors -->
+      <div class="flex items-center gap-1">
+        <div class="relative" title="Cor do Texto">
+          <button id="btn-text-color" class="tb-btn relative" title="Cor do Texto">
+            <i class="fa-solid fa-font"></i>
+            <span id="color-bar" class="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full bg-black"></span>
+          </button>
+          <input type="color" id="text-color-picker" value="#000000" class="opacity-0 absolute inset-0 w-full h-full cursor-pointer" title="Cor do Texto"/>
+        </div>
+        <div class="relative" title="Cor de Realce">
+          <button id="btn-highlight" class="tb-btn relative" title="Cor de Realce">
+            <i class="fa-solid fa-highlighter"></i>
+            <span id="highlight-bar" class="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full bg-yellow-300"></span>
+          </button>
+          <input type="color" id="highlight-color-picker" value="#FFFF00" class="opacity-0 absolute inset-0 w-full h-full cursor-pointer" title="Cor de Realce"/>
+        </div>
+      </div>
+
+      <div class="tb-divider"></div>
+
+      <!-- Alignment -->
+      <button id="btn-align-left" class="tb-btn" title="Alinhar à Esquerda (Ctrl+L)"><i class="fa-solid fa-align-left"></i></button>
+      <button id="btn-align-center" class="tb-btn" title="Centralizar (Ctrl+E)"><i class="fa-solid fa-align-center"></i></button>
+      <button id="btn-align-right" class="tb-btn" title="Alinhar à Direita (Ctrl+R)"><i class="fa-solid fa-align-right"></i></button>
+      <button id="btn-align-justify" class="tb-btn" title="Justificar (Ctrl+J)"><i class="fa-solid fa-align-justify"></i></button>
+
+      <div class="tb-divider"></div>
+
+      <!-- Lists -->
+      <button id="btn-ul" class="tb-btn" title="Lista não ordenada"><i class="fa-solid fa-list-ul"></i></button>
+      <button id="btn-ol" class="tb-btn" title="Lista ordenada"><i class="fa-solid fa-list-ol"></i></button>
+
+      <div class="tb-divider"></div>
+
+      <!-- Indent -->
+      <button id="btn-indent" class="tb-btn" title="Aumentar Recuo"><i class="fa-solid fa-indent"></i></button>
+      <button id="btn-outdent" class="tb-btn" title="Diminuir Recuo"><i class="fa-solid fa-outdent"></i></button>
+
+      <div class="tb-divider"></div>
+
+      <!-- Insert -->
+      <button id="btn-hr" class="tb-btn" title="Inserir Linha Horizontal"><i class="fa-solid fa-minus"></i></button>
+      <button id="btn-link" class="tb-btn" title="Inserir Link"><i class="fa-solid fa-link"></i></button>
+
+      <div class="tb-divider"></div>
+
+      <!-- History -->
+      <button id="btn-undo" class="tb-btn" title="Desfazer (Ctrl+Z)"><i class="fa-solid fa-rotate-left"></i></button>
+      <button id="btn-redo" class="tb-btn" title="Refazer (Ctrl+Y)"><i class="fa-solid fa-rotate-right"></i></button>
+
+      <div class="tb-divider"></div>
+
+      <!-- Clear -->
+      <button id="btn-clear-format" class="tb-btn" title="Limpar Formatação"><i class="fa-solid fa-remove-format"></i></button>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       CANVAS (A4 centered)
+  ═══════════════════════════════════════ -->
+  <main id="canvas" class="flex-1 bg-gray-200 flex justify-center py-8 px-4 overflow-auto">
+    <div id="doc-area" contenteditable="true" spellcheck="true" data-placeholder="Comece a digitar seu documento aqui..." aria-label="Área de edição do documento" role="textbox" aria-multiline="true"></div>
+  </main>
+
+  <!-- ═══════════════════════════════════════
+       STATUS BAR
+  ═══════════════════════════════════════ -->
+  <footer id="statusbar" class="bg-brand-700 text-white flex items-center justify-between px-4 py-1 flex-shrink-0 select-none">
+    <div class="flex items-center gap-4">
+      <span id="word-count" class="flex items-center gap-1">
+        <i class="fa-solid fa-text-width text-white/60 text-xs"></i>
+        <span class="text-white/80">0 palavras · 0 caracteres</span>
+      </span>
+      <span id="line-count" class="hidden sm:flex items-center gap-1">
+        <i class="fa-solid fa-list text-white/60 text-xs"></i>
+        <span class="text-white/80">1 linha</span>
+      </span>
+    </div>
+    <div class="flex items-center gap-3 text-white/70 text-xs">
+      <span class="hidden md:block">Ctrl+S para salvar</span>
+      <span class="flex items-center gap-1">
+        <i class="fa-solid fa-circle text-green-400 text-[8px]"></i>
+        <span>Pronto</span>
+      </span>
+    </div>
+  </footer>
+
+  <!-- ═══════════════════════════════════════
+       HIDDEN FILE INPUT
+  ═══════════════════════════════════════ -->
+  <input type="file" id="file-input" accept=".txt" class="hidden" aria-hidden="true"/>
+
+  <!-- ═══════════════════════════════════════
+       TOAST
+  ═══════════════════════════════════════ -->
+  <div id="toast" role="status" aria-live="polite">
+    <div class="bg-gray-900 text-white text-sm font-medium px-4 py-2.5 rounded-lg shadow-xl flex items-center gap-2">
+      <i id="toast-icon" class="fa-solid fa-circle-check text-green-400"></i>
+      <span id="toast-msg">Salvo com sucesso!</span>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       CONFIRM MODAL (New Document)
+  ═══════════════════════════════════════ -->
+  <div id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div id="modal-box" class="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full mx-4">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+          <i class="fa-solid fa-triangle-exclamation text-amber-500"></i>
+        </div>
+        <div>
+          <h2 id="modal-title" class="font-semibold text-gray-900 text-base">Novo Documento</h2>
+          <p class="text-gray-500 text-sm mt-0.5">O conteúdo não salvo será perdido.</p>
+        </div>
+      </div>
+      <p class="text-gray-600 text-sm mb-5">Deseja salvar o documento atual antes de criar um novo?</p>
+      <div class="flex gap-2 justify-end">
+        <button id="modal-cancel" class="px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 transition font-medium">Cancelar</button>
+        <button id="modal-discard" class="px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 transition font-medium">Descartar</button>
+        <button id="modal-save" class="px-4 py-2 rounded-lg bg-brand-600 text-white text-sm hover:bg-brand-700 transition font-medium">Salvar e Novo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       LINK MODAL
+  ═══════════════════════════════════════ -->
+  <div id="link-modal-overlay" class="fixed inset-0 bg-black/40 flex items-center justify-center z-[1001] opacity-0 pointer-events-none transition-opacity" role="dialog" aria-modal="true" aria-labelledby="link-modal-title">
+    <div id="link-modal-box" class="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full mx-4 scale-95 transition-transform">
+      <h2 id="link-modal-title" class="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        <i class="fa-solid fa-link text-brand-600"></i> Inserir Link
+      </h2>
+      <div class="space-y-3 mb-5">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Texto do link</label>
+          <input id="link-text" type="text" placeholder="Texto exibido" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition"/>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">URL</label>
+          <input id="link-url" type="url" placeholder="https://exemplo.com" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 transition"/>
+        </div>
+      </div>
+      <div class="flex gap-2 justify-end">
+        <button id="link-cancel" class="px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 transition font-medium">Cancelar</button>
+        <button id="link-insert" class="px-4 py-2 rounded-lg bg-brand-600 text-white text-sm hover:bg-brand-700 transition font-medium">Inserir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       JAVASCRIPT
+  ═══════════════════════════════════════ -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+      /* ── Elements ── */
+      const doc         = document.getElementById('doc-area');
+      const docTitle    = document.getElementById('doc-title');
+      const fileInput   = document.getElementById('file-input');
+      const wordCount   = document.getElementById('word-count').querySelector('span');
+      const wordCountH  = document.getElementById('word-count-header');
+      const lineCount   = document.getElementById('line-count').querySelector('span');
+
+      /* ── Toolbar elements ── */
+      const fontFamily  = document.getElementById('font-family');
+      const fontSize    = document.getElementById('font-size');
+      const textColor   = document.getElementById('text-color-picker');
+      const highlightC  = document.getElementById('highlight-color-picker');
+      const colorBar    = document.getElementById('color-bar');
+      const hlBar       = document.getElementById('highlight-bar');
+
+      /* ── Saved range for color pickers ── */
+      let savedRange = null;
+
+      /* ─────────────────────────────────
+         EXEC COMMAND HELPER
+      ───────────────────────────────── */
+      function exec(cmd, value = null) {
+        doc.focus();
+        document.execCommand(cmd, false, value);
+        updateToolbarState();
+        updateCounts();
+      }
+
+      /* ─────────────────────────────────
+         TOOLBAR BUTTON WIRING
+      ───────────────────────────────── */
+      const buttons = {
+        'btn-bold':         () => exec('bold'),
+        'btn-italic':       () => exec('italic'),
+        'btn-underline':    () => exec('underline'),
+        'btn-strikethrough':() => exec('strikeThrough'),
+        'btn-align-left':   () => exec('justifyLeft'),
+        'btn-align-center': () => exec('justifyCenter'),
+        'btn-align-right':  () => exec('justifyRight'),
+        'btn-align-justify':() => exec('justifyFull'),
+        'btn-ul':           () => exec('insertUnorderedList'),
+        'btn-ol':           () => exec('insertOrderedList'),
+        'btn-indent':       () => exec('indent'),
+        'btn-outdent':      () => exec('outdent'),
+        'btn-hr':           () => exec('insertHorizontalRule'),
+        'btn-undo':         () => exec('undo'),
+        'btn-redo':         () => exec('redo'),
+        'btn-clear-format': () => exec('removeFormat'),
+        'btn-link':         () => openLinkModal(),
+      };
+
+      Object.entries(buttons).forEach(([id, fn]) => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('click', fn);
+      });
+
+      /* ─────────────────────────────────
+         FONT FAMILY & SIZE
+      ───────────────────────────────── */
+      fontFamily.addEventListener('change', () => {
+        exec('fontName', fontFamily.value);
+        doc.style.fontFamily = fontFamily.value;
+      });
+
+      fontSize.addEventListener('change', () => {
+        // execCommand fontSize uses 1-7, we use pt via styleWithCSS
+        document.execCommand('styleWithCSS', false, true);
+        exec('fontSize', '3'); // placeholder
+        // Override with actual pt size via span wrapping approach
+        const selection = window.getSelection();
+        if (!selection.rangeCount) return;
+        const range = selection.getRangeAt(0);
+        if (range.collapsed) {
+          // Place a span at cursor so next typed text uses the size
+          doc.style.fontSize = fontSize.value;
+          return;
+        }
+        // Wrap selection
+        try {
+          const span = document.createElement('span');
+          span.style.fontSize = fontSize.value;
+          range.surroundContents(span);
+        } catch(e) {
+          document.execCommand('styleWithCSS', false, true);
+        }
+        doc.focus();
+        updateCounts();
+      });
+
+      /* ─────────────────────────────────
+         COLOR PICKERS
+      ───────────────────────────────── */
+      // Save range before color picker opens (mousedown)
+      document.getElementById('btn-text-color').addEventListener('mousedown', saveRange);
+      document.getElementById('btn-highlight').addEventListener('mousedown', saveRange);
+
+      textColor.addEventListener('input', () => {
+        colorBar.style.background = textColor.value;
+      });
+      textColor.addEventListener('change', () => {
+        restoreRange();
+        colorBar.style.background = textColor.value;
+        exec('foreColor', textColor.value);
+      });
+
+      highlightC.addEventListener('input', () => {
+        hlBar.style.background = highlightC.value;
+      });
+      highlightC.addEventListener('change', () => {
+        restoreRange();
+        hlBar.style.background = highlightC.value;
+        exec('hiliteColor', highlightC.value);
+      });
+
+      function saveRange() {
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount > 0) {
+          savedRange = sel.getRangeAt(0).cloneRange();
+        }
+      }
+
+      function restoreRange() {
+        if (!savedRange) return;
+        doc.focus();
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(savedRange);
+      }
+
+      /* ─────────────────────────────────
+         UPDATE TOOLBAR STATE
+      ───────────────────────────────── */
+      const commandMap = {
+        'btn-bold':         'bold',
+        'btn-italic':       'italic',
+        'btn-underline':    'underline',
+        'btn-strikethrough':'strikeThrough',
+        'btn-align-left':   'justifyLeft',
+        'btn-align-center': 'justifyCenter',
+        'btn-align-right':  'justifyRight',
+        'btn-align-justify':'justifyFull',
+        'btn-ul':           'insertUnorderedList',
+        'btn-ol':           'insertOrderedList',
+      };
+
+      function updateToolbarState() {
+        Object.entries(commandMap).forEach(([id, cmd]) => {
+          const btn = document.getElementById(id);
+          if (!btn) return;
+          try {
+            const active = document.queryCommandState(cmd);
+            btn.classList.toggle('active', active);
+          } catch(e) {}
+        });
+      }
+
+      doc.addEventListener('keyup', updateToolbarState);
+      doc.addEventListener('mouseup', updateToolbarState);
+      doc.addEventListener('selectionchange', updateToolbarState);
+      document.addEventListener('selectionchange', updateToolbarState);
+
+      /* ─────────────────────────────────
+         WORD / CHARACTER / LINE COUNTS
+      ───────────────────────────────── */
+      function updateCounts() {
+        const text = doc.innerText || '';
+        const words = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+        const chars = text.replace(/\n/g, '').length;
+        const lines = (text.match(/\n/g) || []).length + 1;
+
+        wordCount.textContent = `${words} ${words === 1 ? 'palavra' : 'palavras'} · ${chars} ${chars === 1 ? 'caractere' : 'caracteres'}`;
+        wordCountH.textContent = `${words} ${words === 1 ? 'palavra' : 'palavras'}`;
+        lineCount.querySelector ? lineCount.textContent = `${lines} ${lines === 1 ? 'linha' : 'linhas'}` : null;
+      }
+
+      // Re-grab line count span properly
+      const lineCountEl = document.getElementById('line-count').querySelector('span');
+      function updateCountsFull() {
+        const text = doc.innerText || '';
+        const words = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+        const chars = text.replace(/\n/g, '').length;
+        const lines = (text.match(/\n/g) || []).length + 1;
+        wordCount.textContent = `${words} ${words === 1 ? 'palavra' : 'palavras'} · ${chars} ${chars === 1 ? 'caractere' : 'caracteres'}`;
+        wordCountH.textContent = `${words} ${words === 1 ? 'palavra' : 'palavras'}`;
+        if (lineCountEl) lineCountEl.textContent = `${lines} ${lines === 1 ? 'linha' : 'linhas'}`;
+      }
+
+      doc.addEventListener('input', updateCountsFull);
+      doc.addEventListener('keyup', updateCountsFull);
+
+      /* ─────────────────────────────────
+         NEW DOCUMENT
+      ───────────────────────────────── */
+      document.getElementById('btn-new').addEventListener('click', () => {
+        if (doc.innerText.trim().length > 0) {
+          openModal();
+        } else {
+          resetDocument();
+        }
+      });
+
+      function resetDocument() {
+        doc.innerHTML = '';
+        docTitle.value = 'Documento sem título';
+        updateCountsFull();
+        doc.focus();
+        showToast('Novo documento criado', 'info');
+      }
+
+      /* ─────────────────────────────────
+         SAVE AS .TXT
+      ───────────────────────────────── */
+      document.getElementById('btn-save').addEventListener('click', saveDocument);
+
+      function saveDocument() {
+        const text = doc.innerText || '';
+        const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        const name = (docTitle.value.trim() || 'documento') + '.txt';
+        a.href = url;
+        a.download = name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast(`Salvo como "${name}"`, 'success');
+      }
+
+      /* ─────────────────────────────────
+         OPEN .TXT
+      ───────────────────────────────── */
+      document.getElementById('btn-open').addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          doc.innerText = ev.target.result;
+          docTitle.value = file.name.replace(/\.txt$/i, '');
+          updateCountsFull();
+          showToast(`"${file.name}" carregado`, 'success');
+        };
+        reader.readAsText(file, 'UTF-8');
+        fileInput.value = '';
+      });
+
+      /* ─────────────────────────────────
+         PRINT
+      ───────────────────────────────── */
+      document.getElementById('btn-print').addEventListener('click', () => window.print());
+
+      /* ─────────────────────────────────
+         LINK MODAL
+      ───────────────────────────────── */
+      const linkOverlay = document.getElementById('link-modal-overlay');
+      const linkBox     = document.getElementById('link-modal-box');
+      const linkText    = document.getElementById('link-text');
+      const linkUrl     = document.getElementById('link-url');
+      let linkSavedRange = null;
+
+      function openLinkModal() {
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount > 0) {
+          linkSavedRange = sel.getRangeAt(0).cloneRange();
+          linkText.value = sel.toString();
+        } else {
+          linkText.value = '';
+        }
+        linkUrl.value = '';
+        linkOverlay.classList.remove('pointer-events-none');
+        linkOverlay.style.opacity = '1';
+        linkBox.style.transform = 'scale(1)';
+        setTimeout(() => linkUrl.focus(), 100);
+      }
+
+      function closeLinkModal() {
+        linkOverlay.style.opacity = '0';
+        linkBox.style.transform = 'scale(0.95)';
+        setTimeout(() => linkOverlay.classList.add('pointer-events-none'), 200);
+      }
+
+      document.getElementById('link-cancel').addEventListener('click', closeLinkModal);
+      linkOverlay.addEventListener('click', (e) => { if (e.target === linkOverlay) closeLinkModal(); });
+
+      document.getElementById('link-insert').addEventListener('click', () => {
+        const url  = linkUrl.value.trim();
+        const text = linkText.value.trim() || url;
+        if (!url) { linkUrl.focus(); return; }
+
+        doc.focus();
+        if (linkSavedRange) {
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(linkSavedRange);
+        }
+
+        const href = url.startsWith('http') ? url : 'https://' + url;
+        const a = `<a href="${href}" target="_blank" rel="noopener noreferrer" style="color:#2563eb;text-decoration:underline;">${text}</a>`;
+        exec('insertHTML', a);
+        closeLinkModal();
+        showToast('Link inserido', 'success');
+      });
+
+      /* ─────────────────────────────────
+         CONFIRM MODAL (New Doc)
+      ───────────────────────────────── */
+      const modalOverlay = document.getElementById('modal-overlay');
+
+      function openModal() {
+        modalOverlay.classList.add('open');
+      }
+      function closeModal() {
+        modalOverlay.classList.remove('open');
+      }
+
+      document.getElementById('modal-cancel').addEventListener('click', closeModal);
+      document.getElementById('modal-discard').addEventListener('click', () => {
+        closeModal();
+        resetDocument();
+      });
+      document.getElementById('modal-save').addEventListener('click', () => {
+        saveDocument();
+        closeModal();
+        setTimeout(resetDocument, 300);
+      });
+
+      modalOverlay.addEventListener('click', (e) => {
+        if (e.target === modalOverlay) closeModal();
+      });
+
+      /* ─────────────────────────────────
+         TOAST
+      ───────────────────────────────── */
+      let toastTimer = null;
+      function showToast(msg, type = 'success') {
+        const toast = document.getElementById('toast');
+        const icon  = document.getElementById('toast-icon');
+        const text  = document.getElementById('toast-msg');
+        text.textContent = msg;
+        const icons = { success: 'fa-circle-check text-green-400', info: 'fa-circle-info text-blue-400', error: 'fa-circle-xmark text-red-400' };
+        icon.className = 'fa-solid ' + (icons[type] || icons.success);
+        toast.classList.add('show');
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 2800);
+      }
+
+      /* ─────────────────────────────────
+         KEYBOARD SHORTCUTS
+      ───────────────────────────────── */
+      document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey || e.metaKey) {
+          switch (e.key.toLowerCase()) {
+            case 's': e.preventDefault(); saveDocument(); break;
+            case 'n': e.preventDefault(); document.getElementById('btn-new').click(); break;
+            case 'o': e.preventDefault(); fileInput.click(); break;
+            case 'p': e.preventDefault(); window.print(); break;
+          }
+        }
+        if (e.key === 'Escape') {
+          closeModal();
+          closeLinkModal();
+        }
+      });
+
+      /* ─────────────────────────────────
+         TAB KEY INSIDE DOC (indent)
+      ───────────────────────────────── */
+      doc.addEventListener('keydown', (e) => {
+        if (e.key === 'Tab') {
+          e.preventDefault();
+          if (e.shiftKey) {
+            exec('outdent');
+          } else {
+            exec('indent');
+          }
+        }
+      });
+
+      /* ─────────────────────────────────
+         DRAG AND DROP .txt files
+      ───────────────────────────────── */
+      const canvas = document.getElementById('canvas');
+      canvas.addEventListener('dragover', (e) => { e.preventDefault(); canvas.classList.add('ring-2','ring-brand-400'); });
+      canvas.addEventListener('dragleave', () => canvas.classList.remove('ring-2','ring-brand-400'));
+      canvas.addEventListener('drop', (e) => {
+        e.preventDefault();
+        canvas.classList.remove('ring-2','ring-brand-400');
+        const file = e.dataTransfer.files[0];
+        if (!file || !file.name.endsWith('.txt')) {
+          showToast('Apenas arquivos .txt são suportados', 'error');
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          doc.innerText = ev.target.result;
+          docTitle.value = file.name.replace(/\.txt$/i, '');
+          updateCountsFull();
+          showToast(`"${file.name}" carregado`, 'success');
+        };
+        reader.readAsText(file, 'UTF-8');
+      });
+
+      /* ─────────────────────────────────
+         INITIAL STATE
+      ───────────────────────────────── */
+      doc.focus();
+      updateCountsFull();
+      updateToolbarState();
+    });
+  </script>
+
+
+</body></html>
